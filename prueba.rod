@@ -1,0 +1,26 @@
+programa tutorial;
+
+var
+    int x, y, k, arreglo[10];
+    float a, b, c;
+    char m;
+
+funcion int prueba(int var1, int var2)
+var
+    int n, local;
+{
+    n = var1 * var2;
+
+    regresa(n);
+}
+
+principal(){
+
+    x = 10;
+    k = 5;
+
+   escribe(prueba(x,k));
+
+
+
+}
