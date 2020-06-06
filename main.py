@@ -138,6 +138,7 @@ memoriaFunciones = {} #guarda las variables y su memoria de las funciones (por q
 contMemFuncion = 0 #contador de varaible 
 funcionParametros = 'global' #No se usa
 lastDir = {'nombre': None, 'memoria': None} #Encontrar cual es la ultima direccion y su memoria
+listaApuntador = {}
 
 #Crea los espacios de memoria
 for i in range(14000):
@@ -165,8 +166,18 @@ def p_programa(p):
     '''
     programa            : Programa Identificador goto PuntoComa programaGlobal Principal popGoto ParentecisIzq ParentecisDer BraquetIzq estatutoVoid BraquetDer addEndProgram llamarMaquinaVirtual
     '''
+    """
+    for i in tablaVariables:
+        for j in tablaVariables[i]['variables']:
+            print(tablaVariables[i]['variables'][j])
+        #print(tablaVariables[i])
+        print("\n")
+    print(listaApuntador)
+    """
     #print(listaVO)
     #print(cuadruplos[contCuadruplos-1].split())
+    
+    
     """
     print(listaDir)
     print(memoriaDisponible)
@@ -178,14 +189,14 @@ def p_programa(p):
 #memoriaFunciones tiene todas las variables locales con su memoria, separadas por su respectiva funcion
 def p_llamarMaquinaVirtual(p):
     "llamarMaquinaVirtual :"
-    maquinaV.virtual(cuadruplos,varConst,memoriaFunciones)
+    maquinaV.virtual(cuadruplos,varConst,memoriaFunciones,listaApuntador)
     
 
 def p_programaGlobal(p):
     '''
-    programaGlobal      : variables definirFuncion addEndFunc programaGlobal
+    programaGlobal      : variables definirFuncion programaGlobal
                         | variables 
-                        | definirFuncion addEndFunc programaGlobal
+                        | definirFuncion programaGlobal
                         | 
     '''
 
@@ -340,7 +351,7 @@ def p_verArray(p):
     lastTemp = varTemp[len(varTemp)-1]['memoria']
     memMemArr = encontrarMemoria(memArr)
 
-    direccion = addVarDireccion()
+    direccion = addVarDireccion(memoria_Der)
     memDireccion = tablaVariables[funcionActual]['variables'][direccion]['memoria']
 
     funArray = validarVar(p[-5])
@@ -352,7 +363,7 @@ def p_verArray(p):
     contCuadruplos += 1
 
 #Crea las variables de tipo apuntador
-def addVarDireccion():
+def addVarDireccion(memoria_Der):
     global lastDir
     
     #Encuentra su memoria
@@ -362,6 +373,7 @@ def addVarDireccion():
     tablaVariables[funcionActual]['variables'][str('#P'+str(num-12000))] = {'nombreVariable':str('#P'+str(num-12000)),'tipoVariable':'pointer','memoria': num, 'limites':None, 'direccion':None}
     lastDir['nombre'] = str('#P'+str(num-12000))
     lastDir['memoria'] = num
+    listaApuntador[num] = memoria_Der
 
     #regresa el nombre de la variable
     return str('#P'+str(num-12000))
@@ -391,7 +403,7 @@ def encontrarLimite(arr):
 #Al final llevan popVars las dos filas
 def p_definirFuncion(p):
     '''
-    definirFuncion      : Funcion TipoRetorno Identificador modificarFuncionActual ParentecisIzq parametrosDeclaracion ParentecisDer variablesLocales BraquetIzq estatutoVoid BraquetDer popVars
+    definirFuncion      : Funcion TipoRetorno Identificador modificarFuncionActual ParentecisIzq parametrosDeclaracion ParentecisDer variablesLocales BraquetIzq estatutoVoid BraquetDer addEndFunc popVars
                         | Funcion Tipo Identificador modificarFuncionActual ParentecisIzq parametrosDeclaracion ParentecisDer variablesLocales BraquetIzq estatuto validarRegresa BraquetDer popVars
     '''
     global funcionActual
@@ -485,7 +497,7 @@ def p_estatuto(p):
                         | mientras noReturn estatuto 
                         | desde noReturn estatuto 
                         | llamarFuncion noReturn estatuto 
-                        | regresa siReturn estatuto
+                        | regresa siReturn addEndFunc estatuto
                         | 
     '''
 
@@ -570,7 +582,7 @@ def p_iniciarListaDir(p):
 def p_asignarValor(p):
     '''
     asignarValor        : exprecionArismetica valorFinal
-                        | tipoIdentificador validarVariable
+                        | tipoIdentificador validarVariable 
                         | llamarFuncionAsignacion validarLlamada
                         | ConstanteInt validarInt
                         | ConstanteFloat validarFloat
@@ -899,6 +911,14 @@ def p_asignarOperadorLogico(p):
     '''
 def p_addSignoLogico(p):
     "addVariableLogica :"
+    
+    
+    func = validarVar(p[-1])
+
+    if tablaVariables[func]['variables'][p[-1]]['limites'] != None:
+        listaDir.append(tablaVariables[func]['variables'][p[-1]]['direccion'])
+    
+
     listaVarLogicos.append(p[-1])
 
 
@@ -1750,6 +1770,7 @@ def addConst(const):
             if str(const) in varConst:
                 #Se asigna la memoria previa
                 num = varConst[str(const)]['memoria']
+                tablaVariables[funcionActual]['variables'][const] = {'nombreVariable':const,'tipoVariable':'int','memoria': num, 'limites':None, 'direccion':None}
             else:
                 #Se busca una nueva memoria
                 num = memConst()

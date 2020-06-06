@@ -18,7 +18,7 @@ for i in range(14000):
 
 
 #Funcion principal de la maquina virtual (es la que el compilador manda llamar para ejecutar los cuadruplos)
-def virtual(cuadruplos,varConst,memoriaFunciones):
+def virtual(cuadruplos,varConst,memoriaFunciones,listaApuntador):
   
     #llamada a variables globales
     global contMemoriaMV
@@ -59,6 +59,7 @@ def virtual(cuadruplos,varConst,memoriaFunciones):
                     addMemFun(int(instr[1]),memoriaFunciones)
                     regresa = False
                     #Se le asigna el valor de retorno 
+                    memoriaMV[mem].append(None)
                     memoriaMV[mem][mandarDir(fM(int(instr[1])))] = valorRegresa.pop() #Los valores de regreso de funcion se guardan en esta lista
                 else:
                     #Si esta en la funcion principal, solamente se le asigna al espacio de memoria lo que regreso la funcion
@@ -148,7 +149,7 @@ def virtual(cuadruplos,varConst,memoriaFunciones):
             #Se guarda el nombre de la funcion
             funcActual = instr[1]
             #Se manda a crear el espacio de memoria de la nueva funcion
-            era(memoriaFunciones,instr[1],varConst)
+            era(memoriaFunciones,instr[1],varConst,listaApuntador)
             apuntador += 1
         #Para los parametros
         elif instr[0] == 'Param':
@@ -219,8 +220,7 @@ def addDireccion(ver, num1, num2,memoriaFunciones,instr):
             #agrega la memoria si no estaba
             if addMem not in memoriaFunciones[instr]:
                 memoriaFunciones[instr][addMem] = tam
-                memoriaMV[mem].append(None)
-          
+                memoriaMV[mem].append(memoriaMV['0'][addMem])
 
 #Agrega la memoria del valor de los parametros  
 def addParam(num,varConst):
@@ -234,10 +234,17 @@ def addParam(num,varConst):
 
 
 #Crea el nuevo espacio de memoria para la funcion 
-def era(memoriaFunciones, instr, varConst):
+def era(memoriaFunciones, instr, varConst,listaApuntador):
     global memoriaMV
     global mFun
     global listaMemFun
+
+
+    iniciaList = 0
+
+    for i in memoriaFunciones[instr]:
+        memoriaFunciones[instr][i] = iniciaList
+        iniciaList += 1
 
     #Valida si esta en principal o no y en caso de no estarlo guarda el espacio de memoria provicional
     if contMemoriaMV > 0:
@@ -245,10 +252,12 @@ def era(memoriaFunciones, instr, varConst):
 
     #Crea la lista que referencia a las memorias
     mFun = memoriaFunciones[instr]
+
+        
     add = True
     #Crea la nueva lista de memorias
     memoriaMV[str(contMemoriaMV + 1)] = []
-    
+
     memCero = None
 
     #Agrega la memoria de la constante 0
@@ -260,7 +269,7 @@ def era(memoriaFunciones, instr, varConst):
 
     if memCero not in memoriaFunciones[instr]:
         memoriaFunciones[instr][memCero] = tam
-    
+
     #Crea la memoria con el valor de las constantes ya predefinidp
     for i in memoriaFunciones[instr]:
         for j in varConst:
@@ -277,11 +286,14 @@ def era(memoriaFunciones, instr, varConst):
     if contMemoriaMV > 0:
         listaMemFun
 
-    #Le asigna las constantes a la memoria provicional de la funcion
-    for i in mFun:
-        if i < 3000:
-            memoriaMV[str(contMemoriaMV + 1)][mFun[i]] = memoriaMV['0'][i]
+    #Le asigna las globales a la memoria provicional de la funcion
+    for j in mFun:
+        if j >= 12000:
+            memoriaMV[str(contMemoriaMV + 1)][mFun[j]] = memoriaMV['0'][listaApuntador[j]]
 
+        if j < 3000:
+            memoriaMV[str(contMemoriaMV + 1)][mFun[j]] = memoriaMV['0'][j]
+    
 
 
 #Direcciona la memoria para el verdadero espacio de memoria
